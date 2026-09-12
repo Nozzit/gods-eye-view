@@ -99,19 +99,47 @@ const LABEL_VISIBLE_RANGE_M = 600;
 const LABELED_KINDS = Object.freeze(new Set(['photo', 'video', 'historical', 'listing']));
 /** Kinds that never get an image plane (no media to hang — just a viewpoint). */
 const PLANELESS_KINDS = Object.freeze(new Set(['streetview']));
+
+/**
+ * Row chips, one per media kind, in display order. Each maps to a boolean
+ * param (`showPhoto` …) that the share link also carries (layerState
+ * OPTION_GROUPS['geo-media']). Street View is OFF by default: ~90 pano
+ * viewpoints in a 100 m circle bury the actual finds.
+ */
+export const GEO_MEDIA_KIND_CHIPS = Object.freeze([
+  Object.freeze({ kind: 'photo', param: 'showPhoto', label: 'PHOTO', defaultValue: true, title: 'Photos found online' }),
+  Object.freeze({ kind: 'video', param: 'showVideo', label: 'VIDEO', defaultValue: true, title: 'Videos (YouTube)' }),
+  Object.freeze({ kind: 'historical', param: 'showHistorical', label: 'HISTORY', defaultValue: true, title: 'Historical photos and postcards' }),
+  Object.freeze({ kind: 'listing', param: 'showListing', label: 'LISTING', defaultValue: true, title: 'Real-estate listings' }),
+  Object.freeze({ kind: 'streetview', param: 'showStreetview', label: 'STREET VIEW', defaultValue: false, title: 'Google Street View pano viewpoints' }),
+]);
+/** Kinds without their own chip (aerial) ride along with PHOTO. */
+const CHIP_KIND_ALIASES = Object.freeze({ aerial: 'photo' });
+
+function defaultKindVisibility() {
+  return Object.fromEntries(GEO_MEDIA_KIND_CHIPS.map((chip) => [chip.kind, chip.defaultValue]));
+}
+
+function chipKindFor(kind) {
+  return CHIP_KIND_ALIASES[kind] || kind;
+}
 /** How far behind / above the item's camera the select flight parks. */
 const SELECT_STANDOFF_M = 7;
 const SELECT_LIFT_M = 2.5;
 
 /** Pin + wedge colour per media kind. */
-const KIND_COLORS = Object.freeze({
-  photo: Cesium.Color.fromCssColorString('#3fe0ff'),
-  video: Cesium.Color.fromCssColorString('#ff6b3d'),
-  historical: Cesium.Color.fromCssColorString('#ffc043'),
-  listing: Cesium.Color.fromCssColorString('#5ce08a'),
-  streetview: Cesium.Color.fromCssColorString('#e8f4ff'),
-  aerial: Cesium.Color.fromCssColorString('#e8f4ff'),
+/** Pin colour per kind, as CSS strings so the row chips can share them. */
+export const KIND_CSS_COLORS = Object.freeze({
+  photo: '#3fe0ff',
+  video: '#ff6b3d',
+  historical: '#ffc043',
+  listing: '#5ce08a',
+  streetview: '#e8f4ff',
+  aerial: '#e8f4ff',
 });
+const KIND_COLORS = Object.freeze(Object.fromEntries(
+  Object.entries(KIND_CSS_COLORS).map(([kind, css]) => [kind, Cesium.Color.fromCssColorString(css)]),
+));
 
 let _viewer = null;
 let _dataSource = null;
@@ -128,6 +156,7 @@ let _panel = null;
 let _lastError = null;
 let _loaded = false;
 let _loadPromise = null;
+let _kindVisible = defaultKindVisibility();
 
 /** @returns {Cesium.Color} Colour for a media kind. */
 function colorForKind(kind) {
@@ -492,6 +521,7 @@ function buildRecord(item, pack) {
   _records.push(record);
   _recordById.set(item.id, record);
   applyRecordGeometry(record);
+  applyKindVisibility(record);
   resolveAspect(record);
 }
 
@@ -576,6 +606,29 @@ async function resolveGroundHeights() {
   } catch (error) {
     console.warn('[Data:GeoMedia] ground height resolve failed', error?.message || error);
   }
+}
+
+/**
+ * Shows or hides a record's entities according to the kind chips.
+ * @param {Object} record - Media record.
+ */
+function applyKindVisibility(record) {
+  const visible = _kindVisible[chipKindFor(record.item.kind)] !== false;
+  for (const entity of [record.pinEntity, record.labelEntity, record.wedgeEntity, record.planeEntity]) {
+    if (entity) entity.show = visible;
+  }
+}
+
+function isRecordVisible(record) {
+  return _kindVisible[chipKindFor(record.item.kind)] !== false;
+}
+
+/** Re-applies kind visibility to every record; drops a now-hidden selection. */
+function refreshKindVisibility() {
+  for (const record of _records) applyKindVisibility(record);
+  const active = getActiveRecord();
+  if (active && !isRecordVisible(active)) clearGeoMediaSelection();
+  _viewer?.scene?.requestRender?.();
 }
 
 /** Dims every unselected record so the chosen wedge reads clearly. */
@@ -1013,6 +1066,14 @@ const geoMediaLayer = {
    * @param {Object} [params={}]
    */
   setParams(params = {}) {
+    let kindsChanged = false;
+    for (const chip of GEO_MEDIA_KIND_CHIPS) {
+      if (typeof params[chip.param] !== 'boolean') continue;
+      if (_kindVisible[chip.kind] === params[chip.param]) continue;
+      _kindVisible[chip.kind] = params[chip.param];
+      kindsChanged = true;
+    }
+    if (kindsChanged) refreshKindVisibility();
     if (typeof params.selectedItemId === 'string') {
       selectGeoMediaItem(params.selectedItemId, { fly: params.focusSelected !== false });
     }
@@ -1026,6 +1087,7 @@ const geoMediaLayer = {
     return {
       enabled: _enabled,
       count: _records.length,
+      kinds: { ..._kindVisible },
       selectedItemId: _selectedId,
       calibrationMode: _calibrationMode,
       pose: record
@@ -1038,6 +1100,36 @@ const geoMediaLayer = {
           positionConfidence: record.item.positionConfidence,
         }
         : null,
+    };
+  },
+
+  /**
+   * Row chips for the DATA LAYERS panel: one toggle per media kind, like the
+   * satellite layer's DENSE chip. Counts come from the loaded packs.
+   * @returns {{chips: Array<object>, legend: Array<object>}}
+   */
+  getRowControls() {
+    const tally = {};
+    for (const record of _records) {
+      const kind = chipKindFor(record.item.kind);
+      tally[kind] = (tally[kind] || 0) + 1;
+    }
+    return {
+      chips: GEO_MEDIA_KIND_CHIPS.map((chip) => {
+        const active = _kindVisible[chip.kind] !== false;
+        const count = tally[chip.kind] || 0;
+        return {
+          id: chip.kind,
+          label: count ? `${chip.label} ${count}` : chip.label,
+          color: KIND_CSS_COLORS[chip.kind],
+          active,
+          disabled: count === 0,
+          state: active ? 'active' : 'idle',
+          title: `${chip.title} — ${count} in the loaded packs; click to ${active ? 'hide' : 'show'}`,
+          params: { [chip.param]: !active },
+        };
+      }),
+      legend: [],
     };
   },
 

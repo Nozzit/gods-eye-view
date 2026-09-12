@@ -210,6 +210,14 @@ const OPTION_GROUPS = Object.freeze({
     trackingIdOption('selectedFlightsTrackingId', 't', null),
     trackingIdOption('selectedMilitaryTrackingId', 'u', null),
   ]),
+  'geo-media': Object.freeze([
+    // One chip per media kind; Street View viewpoints are opt-in.
+    booleanOption('showPhoto', 'f', true),
+    booleanOption('showVideo', 'v', true),
+    booleanOption('showHistorical', 'h', true),
+    booleanOption('showListing', 'l', true),
+    booleanOption('showStreetview', 's', false),
+  ]),
   satellites: Object.freeze([
     enumOption('catalog', 'c', 'core', ['core', 'dense'], { core: 'c', dense: 'd' }),
     integerOption('selectedSatTrackingId', 't', null),
@@ -280,7 +288,7 @@ export const LAYER_STATE_REGISTRY = Object.freeze([
   Object.freeze({ id: 'cctv', token: 'c', disposition: 'enabled+options', optionOwner: 'cctv' }),
   Object.freeze({ id: 'earthquakes', token: 'e', disposition: 'enabled-only' }),
   Object.freeze({ id: 'flights', token: 'f', disposition: 'enabled+options', optionOwner: 'flights' }),
-  Object.freeze({ id: 'geo-media', token: 'p', disposition: 'enabled-only' }),
+  Object.freeze({ id: 'geo-media', token: 'p', disposition: 'enabled+options', optionOwner: 'geo-media' }),
   Object.freeze({ id: 'local-dams', token: 'q', disposition: 'enabled-only' }),
   Object.freeze({ id: 'local-datacenters', token: 'd', disposition: 'enabled-only' }),
   Object.freeze({ id: 'local-firms', token: 'w', disposition: 'enabled-only' }),

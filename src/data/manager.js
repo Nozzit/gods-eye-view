@@ -2153,7 +2153,12 @@ export class DataLayerManager {
         container.appendChild(button);
       }
       const state = chip.state || (chip.active ? 'active' : 'idle');
-      button.className = `data-toggle-chip chip-${state}${chip.active ? ' active' : ''}`;
+      button.className = `data-toggle-chip chip-${state}${chip.active ? ' active' : ''}${chip.color ? ' chip-tinted' : ''}`;
+      // Optional per-chip tint (a CSS colour) so a chip can match the marks
+      // it toggles — e.g. Geo Media kinds share the colour of their pins.
+      // Guarded: the unit-test DOM stub has no CSSStyleDeclaration.
+      if (chip.color) button.style?.setProperty?.('--chip-color', chip.color);
+      else button.style?.removeProperty?.('--chip-color');
       if (button.textContent !== chip.label) button.textContent = chip.label;
       button.title = chip.title || '';
       button.disabled = Boolean(chip.disabled);

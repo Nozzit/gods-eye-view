@@ -5962,6 +5962,18 @@ body.cockpit-mode #intel-hud .hud-right-edge { right: 22px; }
   border-color: rgba(255, 255, 255, 0.18);
 }
 
+/* Tinted chips carry the colour of the marks they toggle (--chip-color). */
+.data-toggle-chip.chip-tinted {
+  color: color-mix(in srgb, var(--chip-color) 70%, var(--text-dim));
+  border-color: color-mix(in srgb, var(--chip-color) 35%, transparent);
+}
+
+.data-toggle-chip.chip-tinted.active {
+  color: var(--chip-color);
+  border-color: var(--chip-color);
+  background: color-mix(in srgb, var(--chip-color) 16%, transparent);
+}
+
 .data-toggle-chip.chip-error {
   color: #ff8585;
   border-color: rgba(255, 92, 92, 0.6);
