@@ -145,6 +145,31 @@ export const DATA_CREDITS = [
       '<a href="https://terrain.reearth.land" target="_blank" rel="noopener">Re:Earth Terrain</a> / ' +
       'Mapterhorn (CC BY 4.0) / EGM2008 (NGA)',
   },
+  {
+    key: 'geo-media-wikimedia',
+    html:
+      'Geo Media photos: ' +
+      '<a href="https://commons.wikimedia.org" target="_blank" rel="noopener">Wikimedia Commons</a> ' +
+      '— per-file licence (mostly CC BY-SA); the author and licence of each ' +
+      'photo are shown in the Geo Media panel',
+  },
+  {
+    key: 'geo-media-youtube',
+    html:
+      'Geo Media video: ' +
+      '<a href="https://www.youtube.com" target="_blank" rel="noopener">YouTube</a> ' +
+      '— embedded via youtube-nocookie under the ' +
+      '<a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener">YouTube Terms of Service</a>; ' +
+      'each clip stays its uploader’s',
+  },
+  {
+    key: 'geo-media-other',
+    html:
+      'Geo Media also links archive, photo-sharing, local-media and listing ' +
+      'sites (Memorix, Flickr, municipal archives, estate agents). Nothing is ' +
+      'rehosted: each item keeps its own author, licence and source link in ' +
+      'the Geo Media panel, and all rights remain the publisher’s',
+  },
   // ── Bundled snapshots ───────────────────────────────────────────
   {
     key: 'datacenters',

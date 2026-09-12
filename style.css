@@ -9520,3 +9520,163 @@ body.scene-playback-mode #key-setup {
   border-color: rgba(255, 170, 150, 0.65);
   outline: none;
 }
+
+/* Geo Media
+   Detail panel for the Geo Media layer. The layer module owns this DOM
+   entirely (created in init, removed in destroy), so nothing here is wired
+   through index.html or ui.js. Buttons and the pose readout borrow the CCTV
+   panel's classes (.scene-btn, .cctv-controls, .cctv-cal-readout); only the
+   panel shell and the media stage are new. */
+.geo-media-panel {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 150;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  width: 340px;
+  max-height: 68vh;
+  overflow-y: auto;
+  padding: 12px 13px 13px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--panel-radius);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(14px);
+}
+
+.geo-media-panel[hidden] {
+  display: none;
+}
+
+body.ui-clean-view .geo-media-panel,
+body.cockpit-mode .geo-media-panel {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.geo-media-close {
+  margin-left: auto;
+  padding: 0 6px;
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.geo-media-close:hover,
+.geo-media-close:focus-visible {
+  color: var(--accent);
+  outline: none;
+}
+
+.geo-media-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.geo-media-badge {
+  padding: 2px 6px;
+  color: #071016;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 1.4px;
+  background: #3fe0ff;
+  border-radius: 4px;
+}
+
+/* Badge colour tracks the pin colour of the same kind, so the panel and the
+   globe agree at a glance about what sort of media this is. */
+.geo-media-badge[data-kind='video'] { background: #ff6b3d; }
+.geo-media-badge[data-kind='historical'] { background: #ffc043; }
+.geo-media-badge[data-kind='listing'] { background: #5ce08a; }
+.geo-media-badge[data-kind='streetview'],
+.geo-media-badge[data-kind='aerial'] { background: #e8f4ff; }
+
+.geo-media-name {
+  flex: 1 1 auto;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.geo-media-stage {
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(8, 14, 19, 0.88), rgba(4, 7, 11, 0.96));
+}
+
+.geo-media-stage:empty {
+  min-height: 0;
+  border: none;
+}
+
+.geo-media-stage img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 34vh;
+  object-fit: contain;
+}
+
+.geo-media-stage iframe {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+}
+
+.geo-media-credit,
+.geo-media-description {
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.geo-media-credit {
+  font-family: var(--font-mono);
+  letter-spacing: 0.4px;
+}
+
+.geo-media-source {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.geo-media-source:hover,
+.geo-media-source:focus-visible {
+  text-decoration: underline;
+  outline: none;
+}
+
+.geo-media-readout {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.7px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.geo-media-actions .scene-btn {
+  flex: 1 1 0;
+}
+
+.geo-media-actions .scene-btn.active {
+  color: #071016;
+  background: var(--accent);
+  border-color: var(--accent);
+}
